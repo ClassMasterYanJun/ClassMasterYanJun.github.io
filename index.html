@@ -1,68 +1,65 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Камера и Геолокация (React Webcam)</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Камера и Геолокация</title>
   <style>
     body {
-      margin: 0;
       font-family: sans-serif;
       background: #f4f6f9;
-      color: #333;
+      margin: 0;
+      padding: 0;
     }
 
     header {
-      background-color: #004080;
+      background: #004080;
       color: white;
       padding: 16px;
       text-align: center;
       font-size: 1.3rem;
-      font-weight: bold;
     }
 
     .container {
-      padding: 16px;
       max-width: 600px;
-      margin: auto;
+      margin: 20px auto;
+      padding: 20px;
     }
 
     video, img {
       width: 100%;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      margin-bottom: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
     .btn {
-      display: inline-block;
-      margin: 8px 4px;
+      margin-top: 10px;
       padding: 10px 16px;
       font-size: 1rem;
+      background: #0070cc;
       color: white;
-      background-color: #0070cc;
       border: none;
       border-radius: 5px;
       cursor: pointer;
     }
 
     .btn:hover {
-      background-color: #005bb5;
+      background: #005bb5;
     }
 
     .info {
-      margin-top: 10px;
+      margin-top: 12px;
       font-size: 0.95rem;
     }
   </style>
 </head>
 <body>
-  <header>📷 Камера и Геолокация (React Webcam)</header>
-  <div class="container" id="root"></div>
+  <header>📷 Камера и Геолокация</header>
+  <div class="container" id="app"></div>
 
-  <!-- React + Babel + React Webcam -->
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <!-- React + ReactDOM + Babel -->
+  <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
   <script src="https://unpkg.com/react-webcam@7.0.1/dist/react-webcam.min.js"></script>
 
@@ -70,52 +67,51 @@
     const { useState, useRef, useEffect } = React;
     const Webcam = window["react-webcam"];
 
-    function App() {
+    function CameraApp() {
       const webcamRef = useRef(null);
-      const [imageURL, setImageURL] = useState(null);
       const [geo, setGeo] = useState(null);
+      const [image, setImage] = useState(null);
       const [showCamera, setShowCamera] = useState(false);
 
       const videoConstraints = {
-        facingMode: { exact: "environment" } // задняя камера по умолчанию
+        facingMode: { exact: "environment" }
       };
 
       useEffect(() => {
-        if (navigator.geolocation) {
+        if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               const { latitude, longitude } = pos.coords;
               setGeo({ latitude, longitude });
             },
             (err) => {
-              console.error("Геолокация:", err);
+              console.error("Ошибка геолокации:", err);
               alert("Не удалось получить координаты.");
             }
           );
-        } else {
-          alert("Геолокация не поддерживается.");
         }
       }, []);
 
-      const capture = () => {
-        const imageSrc = webcamRef.current.getScreenshot();
-        setImageURL(imageSrc);
+      const startCamera = () => {
+        setShowCamera(true);
+      };
+
+      const takePhoto = () => {
+        const screenshot = webcamRef.current.getScreenshot();
+        setImage(screenshot);
       };
 
       const downloadImage = () => {
-        if (!imageURL) return;
-        const a = document.createElement("a");
-        a.href = imageURL;
-        a.download = "snapshot.png";
+        const a = document.createElement('a');
+        a.href = image;
+        a.download = 'snapshot.png';
         a.click();
       };
 
       return (
         <div>
           {!showCamera ? (
-            <button className="btn" onClick={() => setShowCamera(true)}>
-              🎥 Запустить камеру
-            </button>
+            <button className="btn" onClick={startCamera}>🎥 Запустить камеру</button>
           ) : (
             <>
               <Webcam
@@ -123,34 +119,33 @@
                 audio={false}
                 screenshotFormat="image/png"
                 videoConstraints={videoConstraints}
-                style={{ borderRadius: "8px", width: "100%" }}
               />
-              <button className="btn" onClick={capture}>📸 Сделать снимок</button>
+              <button className="btn" onClick={takePhoto}>📸 Сделать снимок</button>
             </>
           )}
 
-          {imageURL && (
-            <div>
-              <img src={imageURL} alt="Снимок" />
+          {image && (
+            <>
+              <img src={image} alt="Снимок" />
               <button className="btn" onClick={downloadImage}>💾 Скачать</button>
-            </div>
+            </>
           )}
 
           <div className="info">
             🌍 Геолокация:{" "}
             {geo ? (
-              <span>
+              <>
                 широта: <b>{geo.latitude.toFixed(6)}</b>, долгота: <b>{geo.longitude.toFixed(6)}</b>
-              </span>
+              </>
             ) : (
-              "Получаем координаты..."
+              "определяем..."
             )}
           </div>
         </div>
       );
     }
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    ReactDOM.render(<CameraApp />, document.getElementById("app"));
   </script>
 </body>
 </html>
