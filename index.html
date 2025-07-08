@@ -57,7 +57,7 @@
   <header>📷 Камера и Геолокация</header>
   <div class="container" id="app"></div>
 
-  <!-- React 17, ReactDOM, Babel, React-Webcam -->
+  <!-- Подключение React 17 + Babel + React Webcam -->
   <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -65,12 +65,12 @@
 
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
-    const Webcam = window['react-webcam'];
+    const Webcam = window["react-webcam"];
 
     function CameraApp() {
       const webcamRef = useRef(null);
-      const [geo, setGeo] = useState(null);
       const [image, setImage] = useState(null);
+      const [geo, setGeo] = useState(null);
       const [showCamera, setShowCamera] = useState(false);
 
       const videoConstraints = {
@@ -78,14 +78,14 @@
       };
 
       useEffect(() => {
-        if ("geolocation" in navigator) {
+        if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const { latitude, longitude } = pos.coords;
+            (position) => {
+              const { latitude, longitude } = position.coords;
               setGeo({ latitude, longitude });
             },
-            (err) => {
-              console.error("Ошибка геолокации:", err);
+            (error) => {
+              console.error("Ошибка геолокации:", error);
               alert("Не удалось получить координаты.");
             }
           );
@@ -110,40 +110,39 @@
       };
 
       return (
-        React.createElement("div", null,
-          !showCamera ? (
-            React.createElement("button", { className: "btn", onClick: startCamera }, "🎥 Запустить камеру")
+        <div>
+          {!showCamera ? (
+            <button className="btn" onClick={startCamera}>🎥 Запустить камеру</button>
           ) : (
-            React.createElement("div", null,
-              React.createElement(Webcam, {
-                ref: webcamRef,
-                audio: false,
-                screenshotFormat: "image/png",
-                videoConstraints: videoConstraints
-              }),
-              React.createElement("button", { className: "btn", onClick: takePhoto }, "📸 Сделать снимок")
-            )
-          ),
+            <div>
+              <Webcam
+                ref={webcamRef}
+                audio={false}
+                screenshotFormat="image/png"
+                videoConstraints={videoConstraints}
+              />
+              <button className="btn" onClick={takePhoto}>📸 Сделать снимок</button>
+            </div>
+          )}
 
-          image && React.createElement("div", null,
-            React.createElement("img", { src: image, alt: "Снимок" }),
-            React.createElement("button", { className: "btn", onClick: downloadImage }, "💾 Скачать")
-          ),
+          {image && (
+            <div>
+              <img src={image} alt="Снимок" />
+              <button className="btn" onClick={downloadImage}>💾 Скачать</button>
+            </div>
+          )}
 
-          React.createElement("div", { className: "info" },
-            "🌍 Геолокация: ",
-            geo
+          <div className="info">
+            🌍 Геолокация:{" "}
+            {geo
               ? `широта: ${geo.latitude.toFixed(6)}, долгота: ${geo.longitude.toFixed(6)}`
-              : "определяем..."
-          )
-        )
+              : "определяем..."}
+          </div>
+        </div>
       );
     }
 
-    ReactDOM.render(
-      React.createElement(CameraApp),
-      document.getElementById("app")
-    );
+    ReactDOM.render(<CameraApp />, document.getElementById("app"));
   </script>
 </body>
 </html>
