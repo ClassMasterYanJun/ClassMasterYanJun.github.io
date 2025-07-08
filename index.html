@@ -74,9 +74,10 @@
       const webcamRef = useRef(null);
       const [imageURL, setImageURL] = useState(null);
       const [geo, setGeo] = useState(null);
+      const [showCamera, setShowCamera] = useState(false);
 
       const videoConstraints = {
-        facingMode: "environment"
+        facingMode: { exact: "environment" } // задняя камера по умолчанию
       };
 
       useEffect(() => {
@@ -111,20 +112,30 @@
 
       return (
         <div>
-          <Webcam
-            ref={webcamRef}
-            audio={false}
-            screenshotFormat="image/png"
-            videoConstraints={videoConstraints}
-            style={{ borderRadius: "8px", width: "100%" }}
-          />
-          <button className="btn" onClick={capture}>📸 Сделать снимок</button>
+          {!showCamera ? (
+            <button className="btn" onClick={() => setShowCamera(true)}>
+              🎥 Запустить камеру
+            </button>
+          ) : (
+            <>
+              <Webcam
+                ref={webcamRef}
+                audio={false}
+                screenshotFormat="image/png"
+                videoConstraints={videoConstraints}
+                style={{ borderRadius: "8px", width: "100%" }}
+              />
+              <button className="btn" onClick={capture}>📸 Сделать снимок</button>
+            </>
+          )}
+
           {imageURL && (
             <div>
               <img src={imageURL} alt="Снимок" />
               <button className="btn" onClick={downloadImage}>💾 Скачать</button>
             </div>
           )}
+
           <div className="info">
             🌍 Геолокация:{" "}
             {geo ? (
