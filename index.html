@@ -1,12 +1,206 @@
-<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-<div class="test"></div>
-<script>
-  
-  $(function(){
-    
-    var lds = prompt("Введите пароль","");
-     $(".test").append(lds);
-    
-  });
-  
-</script>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Камера и Геолокация</title>
+
+  <!-- Корпоративный стиль -->
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background-color: #004080;
+      color: white;
+      padding: 16px;
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .container {
+      padding: 16px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    video, canvas, img {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      margin-bottom: 10px;
+    }
+
+    .btn {
+      display: inline-block;
+      margin: 8px 4px;
+      padding: 10px 16px;
+      font-size: 1rem;
+      color: white;
+      background-color: #0070cc;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background-color: #005bb5;
+    }
+
+    .info {
+      margin-top: 10px;
+      font-size: 0.95rem;
+      color: #444;
+    }
+
+    select {
+      padding: 8px;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    📷 Камера и Геолокация
+  </header>
+
+  <div class="container" id="root"></div>
+
+  <!-- React и Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function CameraGeoApp() {
+      const videoRef = useRef(null);
+      const canvasRef = useRef(null);
+      const [devices, setDevices] = useState([]);
+      const [selectedDeviceId, setSelectedDeviceId] = useState('');
+      const [hasCamera, setHasCamera] = useState(false);
+      const [geo, setGeo] = useState(null);
+      const [imageURL, setImageURL] = useState(null);
+
+      // Получение списка камер
+      useEffect(() => {
+        async function getDevices() {
+          const allDevices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = allDevices.filter(device => device.kind === 'videoinput');
+          setDevices(videoDevices);
+          if (videoDevices.length > 0) {
+            setSelectedDeviceId(videoDevices[0].deviceId);
+          }
+        }
+        getDevices();
+      }, []);
+
+      // Инициализация камеры
+      useEffect(() => {
+        if (!selectedDeviceId) return;
+
+        async function initCamera() {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: selectedDeviceId } }
+            });
+            videoRef.current.srcObject = stream;
+            setHasCamera(true);
+          } catch (err) {
+            console.error("Ошибка доступа к камере:", err);
+            alert("Не удалось получить доступ к камере.");
+          }
+        }
+
+        initCamera();
+      }, [selectedDeviceId]);
+
+      // Геолокация
+      useEffect(() => {
+        if (!navigator.geolocation) {
+          alert("Геолокация не поддерживается вашим браузером.");
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            setGeo({ latitude, longitude });
+          },
+          (err) => {
+            console.error("Ошибка геолокации:", err);
+            alert("Не удалось получить координаты.");
+          }
+        );
+      }, []);
+
+      const takePhoto = () => {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0);
+        const dataUrl = canvas.toDataURL('image/png');
+        setImageURL(dataUrl);
+      };
+
+      const downloadImage = () => {
+        if (!imageURL) return;
+        const a = document.createElement('a');
+        a.href = imageURL;
+        a.download = 'snapshot.png';
+        a.click();
+      };
+
+      return (
+        <div>
+          {hasCamera ? (
+            <div>
+              <video ref={videoRef} autoPlay playsInline />
+              <div>
+                <select onChange={e => setSelectedDeviceId(e.target.value)} value={selectedDeviceId}>
+                  {devices.map(device => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                      {device.label || "Камера"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button className="btn" onClick={takePhoto}>📸 Сделать снимок</button>
+              <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+              {imageURL && (
+                <div>
+                  <img src={imageURL} alt="Снимок" />
+                  <button className="btn" onClick={downloadImage}>💾 Скачать</button>
+                </div>
+              )}
+              <div className="info">
+                🌍 Геолокация:{" "}
+                {geo ? (
+                  <span>
+                    широта: <b>{geo.latitude.toFixed(6)}</b>, долгота: <b>{geo.longitude.toFixed(6)}</b>
+                  </span>
+                ) : (
+                  "получаем координаты..."
+                )}
+              </div>
+            </div>
+          ) : (
+            <p>Ожидаем доступ к камере...</p>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<CameraGeoApp />);
+  </script>
+</body>
+</html>
