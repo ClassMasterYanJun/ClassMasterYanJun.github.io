@@ -57,7 +57,7 @@
   <header>📷 Камера и Геолокация</header>
   <div class="container" id="app"></div>
 
-  <!-- React + ReactDOM + Babel -->
+  <!-- React + Babel + React Webcam -->
   <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -113,7 +113,7 @@
           {!showCamera ? (
             <button className="btn" onClick={startCamera}>🎥 Запустить камеру</button>
           ) : (
-            <>
+            <div>
               <Webcam
                 ref={webcamRef}
                 audio={false}
@@ -121,14 +121,14 @@
                 videoConstraints={videoConstraints}
               />
               <button className="btn" onClick={takePhoto}>📸 Сделать снимок</button>
-            </>
+            </div>
           )}
 
           {image && (
-            <>
+            <div>
               <img src={image} alt="Снимок" />
               <button className="btn" onClick={downloadImage}>💾 Скачать</button>
-            </>
+            </div>
           )}
 
           <div className="info">
