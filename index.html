@@ -2,13 +2,17 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Камера и Геолокация</title>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background: #f4f6f9;
       margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     header {
@@ -17,39 +21,70 @@
       padding: 16px;
       text-align: center;
       font-size: 1.3rem;
+      font-weight: bold;
+      user-select: none;
     }
 
     .container {
       max-width: 600px;
       margin: 20px auto;
-      padding: 20px;
+      padding: 0 16px 40px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     video, img {
       width: 100%;
       border-radius: 8px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-      margin-bottom: 10px;
+      margin-bottom: 16px;
+      object-fit: cover;
     }
 
+    /* Круглая кнопка с иконкой фотоаппарата */
+    .btn-camera {
+      background-color: #0070cc;
+      border: none;
+      border-radius: 50%;
+      width: 64px;
+      height: 64px;
+      cursor: pointer;
+      color: white;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+    .btn-camera:hover {
+      background-color: #005bb5;
+    }
+
+    /* Обычные кнопки */
     .btn {
-      margin-top: 10px;
-      padding: 10px 16px;
-      font-size: 1rem;
-      background: #0070cc;
+      background-color: #0070cc;
       color: white;
       border: none;
       border-radius: 5px;
+      padding: 10px 16px;
+      font-size: 1rem;
       cursor: pointer;
+      margin-top: 10px;
+      user-select: none;
     }
-
     .btn:hover {
-      background: #005bb5;
+      background-color: #005bb5;
     }
 
     .info {
       margin-top: 12px;
       font-size: 0.95rem;
+      color: #333;
+      user-select: none;
     }
   </style>
 </head>
@@ -57,7 +92,7 @@
   <header>📷 Камера и Геолокация</header>
   <div class="container" id="app"></div>
 
-  <!-- Подключение React 17 + Babel + React Webcam -->
+  <!-- React 17, ReactDOM, Babel, React Webcam -->
   <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -65,7 +100,7 @@
 
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
-    const Webcam = window["react-webcam"];
+    const Webcam = window["react-webcam"].default;
 
     function CameraApp() {
       const webcamRef = useRef(null);
@@ -97,8 +132,11 @@
       };
 
       const takePhoto = () => {
+        if (!webcamRef.current) return;
         const screenshot = webcamRef.current.getScreenshot();
-        setImage(screenshot);
+        if (screenshot) {
+          setImage(screenshot);
+        }
       };
 
       const downloadImage = () => {
@@ -110,9 +148,18 @@
       };
 
       return (
-        <div>
+        <div style={{width: "100%"}}>
           {!showCamera ? (
-            <button className="btn" onClick={startCamera}>🎥 Запустить камеру</button>
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: 40 }}>
+              <button
+                className="btn-camera"
+                onClick={startCamera}
+                aria-label="Запустить камеру"
+                title="Запустить камеру"
+              >
+                📷
+              </button>
+            </div>
           ) : (
             <div>
               <Webcam
@@ -120,19 +167,26 @@
                 audio={false}
                 screenshotFormat="image/png"
                 videoConstraints={videoConstraints}
+                style={{ borderRadius: 8, boxShadow: "0 2px 6px rgba(0,0,0,0.15)" }}
               />
-              <button className="btn" onClick={takePhoto}>📸 Сделать снимок</button>
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button className="btn-camera" onClick={takePhoto} aria-label="Сделать снимок" title="Сделать снимок">
+                  📸
+                </button>
+              </div>
             </div>
           )}
 
           {image && (
             <div>
-              <img src={image} alt="Снимок" />
-              <button className="btn" onClick={downloadImage}>💾 Скачать</button>
+              <img src={image} alt="Снимок с камеры" />
+              <div style={{ display: 'flex', justifyContent: 'center' }}>
+                <button className="btn" onClick={downloadImage}>💾 Скачать снимок</button>
+              </div>
             </div>
           )}
 
-          <div className="info">
+          <div className="info" style={{ textAlign: "center" }}>
             🌍 Геолокация:{" "}
             {geo
               ? `широта: ${geo.latitude.toFixed(6)}, долгота: ${geo.longitude.toFixed(6)}`
