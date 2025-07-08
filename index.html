@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Камера и Геолокация</title>
   <style>
+    /* стили из предыдущего примера */
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background: #f4f6f9;
@@ -43,7 +44,6 @@
       object-fit: cover;
     }
 
-    /* Круглая кнопка с иконкой фотоаппарата */
     .btn-camera {
       background-color: #0070cc;
       border: none;
@@ -64,7 +64,6 @@
       background-color: #005bb5;
     }
 
-    /* Обычные кнопки */
     .btn {
       background-color: #0070cc;
       color: white;
@@ -92,15 +91,14 @@
   <header>📷 Камера и Геолокация</header>
   <div class="container" id="app"></div>
 
-  <!-- React 17, ReactDOM, Babel, React Webcam -->
   <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-  <script src="https://unpkg.com/react-webcam@7.0.1/dist/react-webcam.min.js"></script>
+  <script src="https://unpkg.com/react-webcam@7.0.1/dist/react-webcam.umd.min.js"></script>
 
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
-    const Webcam = window["react-webcam"].default;
+    const Webcam = window.ReactWebcam; // <-- здесь
 
     function CameraApp() {
       const webcamRef = useRef(null);
