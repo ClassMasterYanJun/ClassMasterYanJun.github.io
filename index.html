@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Камера и Геолокация</title>
   <style>
     body {
       font-family: sans-serif;
       background: #f4f6f9;
       margin: 0;
-      padding: 0;
     }
 
     header {
-      background: #004080;
+      background-color: #004080;
       color: white;
       padding: 16px;
       text-align: center;
@@ -29,7 +28,8 @@
     video, img {
       width: 100%;
       border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      margin-bottom: 10px;
     }
 
     .btn {
@@ -57,7 +57,7 @@
   <header>📷 Камера и Геолокация</header>
   <div class="container" id="app"></div>
 
-  <!-- React + Babel + React Webcam -->
+  <!-- React 17, ReactDOM, Babel, React-Webcam -->
   <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -65,7 +65,7 @@
 
   <script type="text/babel">
     const { useState, useRef, useEffect } = React;
-    const Webcam = window["react-webcam"];
+    const Webcam = window['react-webcam'];
 
     function CameraApp() {
       const webcamRef = useRef(null);
@@ -102,6 +102,7 @@
       };
 
       const downloadImage = () => {
+        if (!image) return;
         const a = document.createElement('a');
         a.href = image;
         a.download = 'snapshot.png';
@@ -109,43 +110,40 @@
       };
 
       return (
-        <div>
-          {!showCamera ? (
-            <button className="btn" onClick={startCamera}>🎥 Запустить камеру</button>
+        React.createElement("div", null,
+          !showCamera ? (
+            React.createElement("button", { className: "btn", onClick: startCamera }, "🎥 Запустить камеру")
           ) : (
-            <div>
-              <Webcam
-                ref={webcamRef}
-                audio={false}
-                screenshotFormat="image/png"
-                videoConstraints={videoConstraints}
-              />
-              <button className="btn" onClick={takePhoto}>📸 Сделать снимок</button>
-            </div>
-          )}
+            React.createElement("div", null,
+              React.createElement(Webcam, {
+                ref: webcamRef,
+                audio: false,
+                screenshotFormat: "image/png",
+                videoConstraints: videoConstraints
+              }),
+              React.createElement("button", { className: "btn", onClick: takePhoto }, "📸 Сделать снимок")
+            )
+          ),
 
-          {image && (
-            <div>
-              <img src={image} alt="Снимок" />
-              <button className="btn" onClick={downloadImage}>💾 Скачать</button>
-            </div>
-          )}
+          image && React.createElement("div", null,
+            React.createElement("img", { src: image, alt: "Снимок" }),
+            React.createElement("button", { className: "btn", onClick: downloadImage }, "💾 Скачать")
+          ),
 
-          <div className="info">
-            🌍 Геолокация:{" "}
-            {geo ? (
-              <>
-                широта: <b>{geo.latitude.toFixed(6)}</b>, долгота: <b>{geo.longitude.toFixed(6)}</b>
-              </>
-            ) : (
-              "определяем..."
-            )}
-          </div>
-        </div>
+          React.createElement("div", { className: "info" },
+            "🌍 Геолокация: ",
+            geo
+              ? `широта: ${geo.latitude.toFixed(6)}, долгота: ${geo.longitude.toFixed(6)}`
+              : "определяем..."
+          )
+        )
       );
     }
 
-    ReactDOM.render(<CameraApp />, document.getElementById("app"));
+    ReactDOM.render(
+      React.createElement(CameraApp),
+      document.getElementById("app")
+    );
   </script>
 </body>
 </html>
