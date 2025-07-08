@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Камера и Геолокация</title>
-
-  <!-- Корпоративный стиль -->
   <style>
     body {
       margin: 0;
@@ -66,13 +64,10 @@
   </style>
 </head>
 <body>
-  <header>
-    📷 Камера и Геолокация
-  </header>
+  <header>📷 Камера и Геолокация</header>
 
   <div class="container" id="root"></div>
 
-  <!-- React и Babel -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -88,44 +83,51 @@
       const [hasCamera, setHasCamera] = useState(false);
       const [geo, setGeo] = useState(null);
       const [imageURL, setImageURL] = useState(null);
+      const streamRef = useRef(null);
 
-      // Получение списка камер
+      // Проверка разрешений
+      async function checkPermissions() {
+        if (!navigator.permissions) return;
+
+        try {
+          const cameraPerm = await navigator.permissions.query({ name: 'camera' });
+          if (cameraPerm.state === 'denied') {
+            alert("Доступ к камере запрещен. Разрешите доступ в настройках браузера.");
+          }
+
+          const geoPerm = await navigator.permissions.query({ name: 'geolocation' });
+          if (geoPerm.state === 'denied') {
+            alert("Доступ к геолокации запрещен. Разрешите доступ в настройках браузера.");
+          }
+        } catch (err) {
+          console.warn("Проверка разрешений не поддерживается:", err);
+        }
+      }
+
       useEffect(() => {
-        async function getDevices() {
+        checkPermissions();
+        getDevices();
+        getGeolocation();
+      }, []);
+
+      // Получить список камер
+      async function getDevices() {
+        try {
           const allDevices = await navigator.mediaDevices.enumerateDevices();
           const videoDevices = allDevices.filter(device => device.kind === 'videoinput');
           setDevices(videoDevices);
           if (videoDevices.length > 0) {
             setSelectedDeviceId(videoDevices[0].deviceId);
           }
+        } catch (err) {
+          console.error("Ошибка получения устройств:", err);
         }
-        getDevices();
-      }, []);
+      }
 
-      // Инициализация камеры
-      useEffect(() => {
-        if (!selectedDeviceId) return;
-
-        async function initCamera() {
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              video: { deviceId: { exact: selectedDeviceId } }
-            });
-            videoRef.current.srcObject = stream;
-            setHasCamera(true);
-          } catch (err) {
-            console.error("Ошибка доступа к камере:", err);
-            alert("Не удалось получить доступ к камере.");
-          }
-        }
-
-        initCamera();
-      }, [selectedDeviceId]);
-
-      // Геолокация
-      useEffect(() => {
+      // Получить геолокацию
+      function getGeolocation() {
         if (!navigator.geolocation) {
-          alert("Геолокация не поддерживается вашим браузером.");
+          alert("Геолокация не поддерживается этим браузером.");
           return;
         }
 
@@ -136,10 +138,48 @@
           },
           (err) => {
             console.error("Ошибка геолокации:", err);
-            alert("Не удалось получить координаты.");
+            let msg = "Не удалось получить координаты.";
+            if (err.code === 1) msg = "Доступ к геолокации отклонен.";
+            else if (err.code === 2) msg = "Информация о местоположении недоступна.";
+            else if (err.code === 3) msg = "Превышено время ожидания.";
+            alert(msg);
           }
         );
-      }, []);
+      }
+
+      // Инициализировать камеру
+      useEffect(() => {
+        if (!selectedDeviceId) return;
+
+        async function initCamera() {
+          try {
+            // Остановить предыдущий стрим
+            if (streamRef.current) {
+              streamRef.current.getTracks().forEach(track => track.stop());
+            }
+
+            const stream = await navigator.mediaDevices.getUserMedia({
+              video: { deviceId: { exact: selectedDeviceId } }
+            });
+
+            videoRef.current.srcObject = stream;
+            streamRef.current = stream;
+            setHasCamera(true);
+          } catch (err) {
+            console.error("Ошибка доступа к камере:", err);
+            alert("Не удалось получить доступ к камере.");
+            setHasCamera(false);
+          }
+        }
+
+        initCamera();
+
+        return () => {
+          if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+          }
+        };
+      }, [selectedDeviceId]);
 
       const takePhoto = () => {
         const video = videoRef.current;
@@ -164,12 +204,12 @@
         <div>
           {hasCamera ? (
             <div>
-              <video ref={videoRef} autoPlay playsInline />
+              <video ref={videoRef} autoPlay playsInline muted />
               <div>
                 <select onChange={e => setSelectedDeviceId(e.target.value)} value={selectedDeviceId}>
-                  {devices.map(device => (
+                  {devices.map((device, index) => (
                     <option key={device.deviceId} value={device.deviceId}>
-                      {device.label || "Камера"}
+                      {device.label || `Камера #${index + 1}`}
                     </option>
                   ))}
                 </select>
@@ -194,7 +234,7 @@
               </div>
             </div>
           ) : (
-            <p>Ожидаем доступ к камере...</p>
+            <p>⏳ Ожидаем доступ к камере...</p>
           )}
         </div>
       );
